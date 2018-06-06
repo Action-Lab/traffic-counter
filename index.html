@@ -18,7 +18,18 @@
       text-align: center;
     }
 
+    .buttons {
+      text-align: center;
+      display: none;
+    }
+
+    input[type="button"] {
+      font-size: 5em;
+    }
+
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/5.0.4/firebase.js"></script>
     <script>
@@ -32,17 +43,20 @@
         messagingSenderId: "852588564259"
       };
       firebase.initializeApp(config);
+
+      var database = firebase.database();
     </script>
 
     <script src="https://cdn.firebase.com/libs/firebaseui/3.0.0/firebaseui.js"></script>
     <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.0.0/firebaseui.css" />
+
     <script type="text/javascript">
       // FirebaseUI config
       var uiConfig = {
-        signInSuccessUrl: '',
+        signInSuccessUrl: 'https://ilyankou.github.io/traffic-counter/index.html',
         signInOptions: [
           firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-          firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          //firebase.auth.EmailAuthProvider.PROVIDER_ID,
         ]
       };
 
@@ -50,6 +64,98 @@
       var ui = new firebaseui.auth.AuthUI(firebase.auth());
       // The start method will wait until the DOM is loaded.
       ui.start('#firebaseui-auth-container', uiConfig);
+
+      var lat = 0;
+      var lon = 0;
+
+      function getLocation() {
+        return lat.toFixed(2) + ',' + lon.toFixed(2);
+      }
+
+      function updateLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            lat = position.coords.latitude;
+            lon = position.coords.longitude;
+          }, function(error) {
+            console.log(error);
+          });
+        }
+
+        setTimeout(this, 10000);
+      }
+
+      updateLocation();
+
+      $(document).ready(function() {
+        // Add event listener that would show/hide app on authentication
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            loadApp(user);
+          } else {
+            showAuth();
+          }
+        }, function(error) {
+          console.log(error);
+        });
+      });
+
+
+
+      function loadApp(user) {
+        $('#firebaseui-auth-container').css('display', 'none');
+        $('.buttons').css('display', 'block');
+
+        // On Button click, do the following
+        $('input[type="button"]').click(function() {
+
+          var code = parseInt($(this).attr('code'));
+          var count = parseInt($(this).attr('count'));
+          var temp = parseInt($('#temp').val());
+          var weather = $('#weather').val();
+
+          pushEntry({
+            name: user.displayName,
+            email: user.email,
+            time: new Date().toString(),
+            intersection: '',
+            code: code,
+            count: count,
+            weather: weather,
+            temp: temp,
+            location: getLocation(),
+          });
+
+        });
+      }
+
+
+      function showAuth() {
+        $('.buttons').css('display', 'none')
+      }
+
+
+
+      function pushEntry(params) {
+        database.ref('/').push(params, function(error) {
+          if (error) {
+            toast(1);
+            console.log(error);
+          } else {
+            toast(0);
+          }
+        });
+      }
+
+
+      function toast(code) {
+        if (code == 0) {
+          console.log('ok')
+        } else {
+          console.log('shit')
+        }
+      }
+
     </script>
   </head>
 
@@ -58,6 +164,17 @@
 
     <h1>Traffic Counter</h1>
     <div id="firebaseui-auth-container"></div>
+
+    Weather:
+    <input type="text" id="weather" value="cloudy"><br>
+
+    Temperature:
+    <input type="text" id="temp" value="72"><br>
+
+    <div class="buttons cars">
+      <input type="button" code=11 count=1 value="+1">
+      <input type="button" code=11 count=5 value="+5">
+    </div>
 
   </body>
 
