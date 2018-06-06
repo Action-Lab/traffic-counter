@@ -82,7 +82,7 @@
           });
         }
 
-        setTimeout(this, 10000);
+        setTimeout(updateLocation, 10000);
       }
 
       updateLocation();
@@ -151,8 +151,10 @@
       function toast(code) {
         if (code == 0) {
           console.log('ok')
+          $('body').append('<span style="color:green">added</span><br>');
         } else {
           console.log('shit')
+          $('body').append('<span style="color:red">error</span><br>');
         }
       }
 
