@@ -14,20 +14,54 @@
       font-family: Arial;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
     }
 
-    .buttons {
-      text-align: center;
-      display: none;
+    .count-button {
+      min-height: 15vh;
+      width: calc(50% - 23px);
+      margin: 0 3px 3px 0;
+      padding: 10px;
+      background-color: #eee;
+      float: left;
+      cursor: pointer;
+      color: #000;
+      font-size: 1.2em;
+    }
+
+    .count-button:hover {
+      background-color: #ccc;
     }
 
     input[type="button"] {
-      font-size: 5em;
+      font-size: 2em;
+    }
+
+    #page1 {
+      height: calc(100vh - 50px);
+      display: none;
+      margin: 0;
+    }
+
+    #page1 {
+      text-align: center;
+      font-size: 1.5em;
+    }
+
+    #page1 input[type="text"] {
+      text-align: center;
+      font-size: 1.2em;
+      max-width: 80%;
+    }
+
+    .count-button-container {
+      display: none;
     }
 
     </style>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
 
@@ -54,6 +88,7 @@
       // FirebaseUI config
       var uiConfig = {
         signInSuccessUrl: 'https://ilyankou.github.io/traffic-counter/index.html',
+        //signInSuccessUrl: 'http://localhost:8080',
         signInOptions: [
           firebase.auth.GoogleAuthProvider.PROVIDER_ID,
           //firebase.auth.EmailAuthProvider.PROVIDER_ID,
@@ -92,8 +127,6 @@
         firebase.auth().onAuthStateChanged(function(user) {
           if (user) {
             loadApp(user);
-          } else {
-            showAuth();
           }
         }, function(error) {
           console.log(error);
@@ -104,10 +137,28 @@
 
       function loadApp(user) {
         $('#firebaseui-auth-container').css('display', 'none');
-        $('.buttons').css('display', 'block');
 
-        // On Button click, do the following
-        $('input[type="button"]').click(function() {
+        $('h2').html(user.displayName + ' (<i><a href="#" class="logout">Log Out</a></i>)');
+
+        $('.logout').click(function() {
+          firebase.auth().signOut().then(function() {
+            location.reload();
+          }, function(error) {
+            console.log(error);
+          });
+        })
+
+        $('#page1').css('display', 'block');
+
+        $('#nextButton').click(function() {
+          $('#page1').css('display', 'none');
+          $('h2').css('display', 'none');
+          var counter = $('input[name="counter"]').val();
+          $('#' + counter).css('display', 'block');
+        });
+
+        // On Button click, retrieve all data from the forms and send it to the Firebase
+        $('.count-button').click(function() {
 
           var code = parseInt($(this).attr('code'));
           var count = parseInt($(this).attr('count'));
@@ -128,13 +179,6 @@
 
         });
       }
-
-
-      function showAuth() {
-        $('.buttons').css('display', 'none')
-      }
-
-
 
       function pushEntry(params) {
         database.ref('/').push(params, function(error) {
@@ -165,18 +209,116 @@
   <body>
 
     <h1>Traffic Counter</h1>
+    <h2></h2>
+
     <div id="firebaseui-auth-container"></div>
 
-    Weather:
-    <input type="text" id="weather" value="cloudy"><br>
+    <div id="page1">
+      Intersection<br>
+      <input type="text" id="temp" value="72"><br><br>
 
-    Temperature:
-    <input type="text" id="temp" value="72"><br>
+      Weather<br>
+      <input type="text" id="weather" value="cloudy"><br><br>
 
-    <div class="buttons cars">
-      <input type="button" code=11 count=1 value="+1">
-      <input type="button" code=11 count=5 value="+5">
+      Temperature<br>
+      <input type="text" id="temp" value="72"><br><br>
+
+      <label>
+        <input type="radio" name="counter" value="cars" checked> Cars
+      </label>
+
+      <label>
+        <input type="radio" name="counter" value="behaviors"> Driver Behaviors
+      </label>
+
+      <label>
+        <input type="radio" name="counter" value="bikers"> Bikers + Walkers
+      </label>
+
+      <br><br>
+
+      <input type="button" value="Next" id="nextButton">
     </div>
+
+
+    <div id="cars" class="count-button-container">
+      <div class="count-button" code=10 count=1>
+        Total cars
+        <br>
+
+        <i class="fas fa-car"></i>
+      </div>
+
+      <div class="count-button" code=10 count=5>
+        Total cars
+        <br>
+
+        <i class="fas fa-car"></i>
+        <i class="fas fa-car"></i>
+        <i class="fas fa-car"></i>
+        <i class="fas fa-car"></i>
+        <i class="fas fa-car"></i>
+      </div>
+
+      <div class="count-button" code=11 count=1>
+        Running red light
+        <br>
+
+        <i class="fas fa-circle" style="color: red;"></i>
+      </div>
+
+      <div class="count-button" code=11 count=5>
+        Running red light
+        <br>
+
+        <i class="fas fa-circle" style="color: red;"></i>
+        <i class="fas fa-circle" style="color: red;"></i>
+        <i class="fas fa-circle" style="color: red;"></i>
+        <i class="fas fa-circle" style="color: red;"></i>
+        <i class="fas fa-circle" style="color: red;"></i>
+      </div>
+
+      <div class="count-button" code=12 count=1>
+        Rolling right on red
+        <br>
+
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+      </div>
+
+      <div class="count-button" code=12 count=5>
+        Rolling right on red
+        <br>
+
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+        <i class="fas fa-arrow-right" style="color: red;"></i>
+      </div>
+
+      <div class="count-button" code=13 count=1>
+        Left turn w/o yielding
+        <br>
+        <i class="far fa-arrow-alt-circle-left"></i>
+
+      </div>
+
+      <div class="count-button" code=13 count=5>
+        Left turn w/o yielding
+        <br>
+
+        <i class="far fa-arrow-alt-circle-left"></i>
+        <i class="far fa-arrow-alt-circle-left"></i>
+        <i class="far fa-arrow-alt-circle-left"></i>
+        <i class="far fa-arrow-alt-circle-left"></i>
+        <i class="far fa-arrow-alt-circle-left"></i>
+      </div>
+    </div>
+
+    <div id="behaviors" class="count-button-container"></div>
+
+    <div id="bikers" class="count-button-container"></div>
+
 
   </body>
 
