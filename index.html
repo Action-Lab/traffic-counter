@@ -39,6 +39,21 @@
       border-left: 1px solid white;
     }
 
+    .bg-bicycle {
+      background-color: blue;
+      color: white;
+    }
+
+    .bg-walker {
+      background-color: #00af46;
+      color: white;
+    }
+
+    .bg-walker-header {
+      background-color: green;
+      color: white;
+    }
+
     </style>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -70,7 +85,7 @@
     <script type="text/javascript">
       // FirebaseUI config
       const uiConfig = {
-        signInSuccessUrl: 'https://ilyankou.github.io/traffic-counter/index.html',
+        signInSuccessUrl: 'https://action-lab.github.io/traffic-counter/index.html',
         //signInSuccessUrl: 'http://localhost:8080',
         signInOptions: [
           firebase.auth.GoogleAuthProvider.PROVIDER_ID,
@@ -90,6 +105,42 @@
 
       const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
         'Thursday', 'Friday', 'Saturday'];
+
+      const code2icon = {
+        10: 'car',
+        11: 'circle',
+        12: 'arrow-right',
+        13: 'arrow-left',
+        14: 'mobile-alt',
+        15: 'coffee',
+        16: 'arrows-alt-h',
+        20: 'bicycle',
+        30: 'walking',
+      }
+
+      const code2color = {
+        10: 'blue',
+        11: 'red',
+        12: 'red',
+        13: 'blue',
+        14: 'blue',
+        15: 'slateblue',
+        16: 'red',
+        20: 'blue',
+        21: 'slateblue',
+        22: 'slateblue',
+        23: 'slateblue',
+        24: 'slateblue',
+        25: 'slateblue',
+        26: 'slateblue',
+        27: 'slateblue',
+        30: 'green',
+        31: '#00af46',
+        32: '#00af46',
+        33: '#00af46',
+        34: '#00af46',
+        35: '#00af46',
+      }
 
       function getLocation() {
         return lat.toFixed(2) + ',' + lon.toFixed(2);
@@ -132,6 +183,11 @@
         });
       }
 
+      function startTimer(t) {
+        $('#timer').html((t < 10 ? '0' + t : t) + ' min');
+        setTimeout(startTimer, 60000, t+1);
+      }
+
       /**
        * Shows app components after user has been logged in
        */
@@ -162,6 +218,8 @@
           $('#form-page').addClass('hide');
           $('#' + whom + '-page').removeClass('hide');
           $('#action-buttons-page').removeClass('hide');
+
+          startTimer(0);
         });
 
         $('#finishCounting').click(function() {
@@ -169,6 +227,7 @@
           alert('Your session has been recorded');
           $('.page').addClass('hide');
           $('#form-page').removeClass('hide');
+          $('#timer').html('');
         });
 
         $('#cancelLast').click(function() {
@@ -238,7 +297,11 @@
             toast(1);
           } else {
             $('#cancelLast').removeAttr('disabled');
-            toast(0);
+            toast(0, {
+              icon: code2icon[params.code] || 'check',
+              n: params.count,
+              color: code2color[params.code] || 'black',
+            });
           }
         }).then(function(snap) {
           // Keeping track of 10 most recent IDs of elements pushed
@@ -253,14 +316,20 @@
 
       /**
        * Shows icons in status bar
+       * t = status: 0 is successfully sent to database, 1 is error, orange is 'item removed'
+       * p = optional parameters
        */
-      function toast(t) {
+      function toast(t, p) {
+        p = p || {icon: 'check', n: 1, color: 'green' };
+
         if ( $('#status-bar i').length >= 11 ) {
           $('#status-bar i:eq(1)').animate({width: '0px', opacity: '0'}, 1000, function() { $(this).remove() });
         }
 
         if (t == 0) {
-          $('#status-bar').append(' <i class="fas fa-check" style="color: green;"></i>');
+          for (var i = 0; i < p.n; i++) {
+            $('#status-bar').append(' <i class="fas fa-' + p.icon + '" style="color: ' + p.color + ';"></i>');
+          }
         } else if (t == 1){
           $('#status-bar').append(' <i class="fas fa-ban" style="color: red"></i>');
         } else if (t == 2) {
@@ -280,6 +349,7 @@
         <div class="col">
           <h2>Traffic Counter</h2>
           <h4></h4>
+          <h6 id="timer" class="text-center text-muted"></h6>
         </div>
       </div>
 
@@ -320,13 +390,13 @@
             <b>Rain</b><br>
             <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
               <label class="btn btn-lg btn-secondary w-100 active">
-                <input type="radio" name="rain" value="No rain" autocomplete="off" checked> <i class="wi wi-na"></i>
+                <input type="radio" name="rain" value="No rain" autocomplete="off" checked> none
               </label>
               <label class="btn btn-lg btn-secondary w-100">
-                <input type="radio" name="rain" value="Light rain" autocomplete="off"> <i class="fas fa-tint"></i>
+                <input type="radio" name="rain" value="Light rain" autocomplete="off"> light
               </label>
               <label class="btn btn-lg btn-secondary w-100">
-                <input type="radio" name="rain" value="Heavy rain" autocomplete="off"> <i class="fas fa-umbrella"></i>
+                <input type="radio" name="rain" value="Heavy rain" autocomplete="off"> heavy
               </label>
             </div>
 
@@ -334,13 +404,13 @@
             <b>Wind</b><br>
             <div class="btn-group d-flex btn-group-toggle" data-toggle="buttons">
               <label class="btn btn-lg btn-secondary w-100 active">
-                <input type="radio" name="wind" value="No wind" autocomplete="off" checked> <i class="wi wi-na"></i>
+                <input type="radio" name="wind" value="No wind" autocomplete="off" checked> none
               </label>
               <label class="btn btn-lg btn-secondary w-100">
-                <input type="radio" name="wind" value="Light wind" autocomplete="off"> <i class="wi wi-windy"></i>
+                <input type="radio" name="wind" value="Light wind" autocomplete="off"> light
               </label>
               <label class="btn btn-lg btn-secondary w-100">
-                <input type="radio" name="wind" value="Strong wind" autocomplete="off"> <i class="wi wi-strong-wind"></i>
+                <input type="radio" name="wind" value="Strong wind" autocomplete="off"> strong
               </label>
             </div>
 
@@ -353,13 +423,13 @@
             <b>What are you counting?</b><br>
             <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons">
               <label class="btn btn-info btn-lg w-100 active">
-                <input type="radio" name="whom" value="cars" autocomplete="off" checked> <i class="fas fa-car"></i>
+                <input type="radio" name="whom" value="cars" autocomplete="off" checked> <i class="fas fa-car"></i> <br> Cars
               </label>
               <label class="btn btn-info w-100 btn-lg">
-                <input type="radio" name="whom" value="behaviors" autocomplete="off"> <i class="fas fa-mobile-alt"></i>
+                <input type="radio" name="whom" value="behaviors" autocomplete="off"> <i class="fas fa-mobile-alt"></i><br> Behavior
               </label>
               <label class="btn btn-info w-100 btn-lg">
-                <input type="radio" name="whom" value="bikes" autocomplete="off"> <i class="fas fa-bicycle"></i> + <i class="fas fa-walking"></i>
+                <input type="radio" name="whom" value="bikes" autocomplete="off"> <i class="fas fa-bicycle"></i> + <i class="fas fa-walking"></i> <br> Bike/Ped
               </label>
             </div>
 
@@ -375,23 +445,30 @@
       <div class="row page hide" id="cars-page">
         <div class="col">
 
+          <div class="container">
+            <div class="row">
+              <div class="col lead font-weight-bold">One:</div>
+              <div class="col text-right lead font-weight-bold">Many:</div>
+            </div>
+          </div>
+
           <div class="btn-group d-flex" role="group">
-            <button code=10 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Total Cars <br> <i class="fas fa-car"></i> </button>
+            <button code=10 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Car <br> <i class="fas fa-car text-primary"></i> </button>
             <button code=10 count=5 type="button" class="btn btn-lg btn-dark w-25 count-button">+5</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=11 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Running Red Light<br> <i class="fas fa-circle" style="color: red;"></i> </button>
+            <button code=11 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Running Red Light<br> <i class="fas fa-circle text-danger"></i> </button>
             <button code=11 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=12 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Rolling Right on Red<br> <i class="fas fa-arrow-right" style="color: red;"></i> </button>
+            <button code=12 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Rolling Right on Red<br> <i class="fas fa-arrow-right text-danger"></i> </button>
             <button code=12 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=13 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Left Turn w/o Yielding<br> <i class="fas fa-arrow-left"></i> </button>
+            <button code=13 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Left Turn w/o Yielding<br> <i class="fas fa-arrow-left text-primary"></i> </button>
             <button code=13 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
@@ -402,18 +479,25 @@
       <div class="row page hide" id="behaviors-page">
         <div class="col">
 
+          <div class="container">
+            <div class="row">
+              <div class="col lead font-weight-bold">One:</div>
+              <div class="col text-right lead font-weight-bold">Many:</div>
+            </div>
+          </div>
+
           <div class="btn-group d-flex" role="group">
-            <button code=14 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Cellphone in Hand<br> <i class="fas fa-mobile-alt"></i> </button>
+            <button code=14 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Cellphone in Hand<br> <i class="fas fa-mobile-alt text-primary"></i> </button>
             <button code=14 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=15 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Distracted Driver<br> <i class="fas fa-comments"></i> </button>
+            <button code=15 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Distracted Driver<br> <i class="fas fa-coffee text-info"></i> </button>
             <button code=15 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=16 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Turning w/o Signal<br> <i class="fas fa-arrow-left"></i> <i class="fas fa-arrow-right"></i> </button>
+            <button code=16 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Turning w/o Signal<br> <i class="fas fa-arrows-alt-h text-danger"></i> </button>
             <button code=16 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
           </div>
 
@@ -425,48 +509,46 @@
         <div class="col">
 
           <div class="btn-group d-flex" role="group">
-            <button code=20 count=1 type="button" class="btn btn-lg btn-dark w-75 count-button">Total Bicycles<br> <i class="fas fa-bicycle"></i> </button>
-            <button code=20 count=2 type="button" class="btn btn-lg btn-dark w-25 count-button">+2</button>
+            <button code=20 count=1 type="button" class="btn btn-lg btn-primary w-100 count-button">Bicycle<br> <i class="fas fa-bicycle"></i> </button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=21 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Bicycle Riding Against Traffic</button>
-            <button code=22 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Bicycle On Sidewalk</button>
+            <button code=21 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">Against Traffic</button>
+            <button code=22 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">On Sidewalk</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=23 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Bicycle Running Light / Crossing without walk Signal</button>
-            <button code=24 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Slow, Look, Cross when clear</button>
+            <button code=23 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">Crossing Against Signal</button>
+            <button code=24 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">Slow, Look, Cross</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=25 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Bicycle with Headphones <br> <i class="fas fa-bicycle"></i> <i class="fas fa-headphones"></i> </button>
-            <button code=26 count=1 type="button" class="btn btn-lg btn-dark w-50 count-button">Bicycle with phone in hand <br> <i class="fas fa-bicycle"></i> <i class="fas fa-mobile-alt"></i> </button>
+            <button code=25 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">With Headphones </button>
+            <button code=26 count=1 type="button" class="btn btn-lg btn-info w-50 count-button">With Phone </button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=27 count=1 type="button" class="btn btn-lg btn-dark w-100 count-button">Bicycle With Helmet <br> </button>
+            <button code=27 count=1 type="button" class="btn btn-lg btn-info w-100 count-button">With Helmet <br> </button>
           </div>
 
           <!-- Walkers -->
 
           <div class="btn-group d-flex" role="group">
-            <button code=30 count=1 type="button" class="btn btn-lg btn-secondary w-75 count-button">Total Walkers<br> <i class="fas fa-walking"></i> </button>
-            <button code=30 count=2 type="button" class="btn btn-lg btn-secondary w-25 count-button">+2</button>
+            <button code=30 count=1 type="button" class="btn btn-lg bg-walker-header w-100 count-button">Walker <br> <i class="fa fa-walking"></i> </button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=31 count=1 type="button" class="btn btn-lg btn-secondary w-50 count-button">Crossing without Walk Signal</button>
-            <button code=32 count=1 type="button" class="btn btn-lg btn-secondary w-50 count-button">Walkers crossing away from intersection and crosswalk</button>
+            <button code=31 count=1 type="button" class="btn btn-lg bg-walker w-50 count-button">Crossing Without Signal</button>
+            <button code=32 count=1 type="button" class="btn btn-lg bg-walker w-50 count-button">Outside Crosswalk</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=33 count=1 type="button" class="btn btn-lg btn-secondary w-50 count-button">Slow, Look, Cross when clear </button>
-            <button code=34 count=1 type="button" class="btn btn-lg btn-secondary w-50 count-button">Walkers with Headphones <br> <i class="fas fa-walking"></i> <i class="fas fa-headphones"></i> </button>
+            <button code=34 count=1 type="button" class="btn btn-lg bg-walker w-50 count-button">With Headphones</button>
+            <button code=33 count=1 type="button" class="btn btn-lg bg-walker w-50 count-button">Slow, Look, Cross</button>
           </div>
 
           <div class="btn-group d-flex" role="group">
-            <button code=35 count=1 type="button" class="btn btn-lg btn-secondary w-100 count-button">Walkers looking at phone <br> <i class="fas fa-walking"></i> <i class="fas fa-mobile-alt"></i>  </button>
+            <button code=35 count=1 type="button" class="btn btn-lg bg-walker w-100 count-button">Looking At Phone</button>
           </div>
 
         </div>
